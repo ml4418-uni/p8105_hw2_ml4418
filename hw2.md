@@ -81,8 +81,14 @@ balls in a dumpster in 2017 is 8
 pols_month_data = read.csv("pols-month.csv") %>%
   separate(mon, into = c("month", "day", "year"), "/") %>%
   mutate(month = as.integer(month)) %>%
-  mutate(month = month.name[month]) %>%
-  mutate(president = prez_gop + prez_dem) %>%
+  mutate(month = month.name[month])
+ 
+prez_gop = filter(pols_month_data, prez_gop == 1 ) %>%
+  mutate(president = "gop")
+prez_dem = filter(pols_month_data, prez_dem == 1) %>%
+  mutate(president = "dem")
+
+pols_month_data = bind_rows(prez_gop, prez_dem) %>%
   select(-prez_gop, -prez_dem , -day)
 ```
 
@@ -117,8 +123,8 @@ final_data =
 ```
 
 Conclusion: The dimension of snp dataset is 787\* 3. The dimension of
-pols-month dataset is 822 \* 9. The dimension of unemployment dataset is
-816 \* 3. The dimension of the final dataset is 822 \* 11. The range of
+pols-month dataset is 817 \* 9. The dimension of unemployment dataset is
+816 \* 3. The dimension of the final dataset is 817 \* 11. The range of
 years in snp dataset is from 1950 to 2015. The range of years in
 pols-month dataset is from 1947 to 2015. The range of years in
 unempolyment dataset is from 1948 to 2015. THe rangeof years in the
@@ -183,5 +189,5 @@ white_males_2016 = filter(popular_baby_names,
                           ethnicity == "WHITE NON HISPANIC",
                           year_of_birth == "2016")
 white_males_2016_plot = ggplot(white_males_2016,
-                               aes(x = rank, y= count)) + geom_point(aes(color = "lightpink"))
+                               aes(x = rank, y = count)) + geom_point(aes(color = "lightpink"))
 ```
