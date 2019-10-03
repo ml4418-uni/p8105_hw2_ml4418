@@ -18,7 +18,7 @@ library(ggplot2)
 
 # problem 1-part 1
 ```{r}
-MrTrash_data = read_excel("trash_data.xlsx", sheet = 1, range = cell_cols("A:N"))
+MrTrash_data = read_excel("new_trash_data.xlsx", sheet = 1, range = cell_cols("A:N"))
 MrTrash_data = janitor::clean_names(MrTrash_data) %>%
   drop_na()
 
@@ -28,21 +28,23 @@ mutate(MrTrash_data, sports_balls = as.integer(round(sports_balls,0)))
 
 # problem 1-part 2
 ```{r}
-pre2018_data = read_excel("trash_data.xlsx", sheet = 3, skip = 1)
+pre2018_data = read_excel("new_trash_data.xlsx", sheet = 5, skip = 1)
 pre2018_data = janitor::clean_names(pre2018_data) %>%
-  drop_na()
+drop_na()
 pre2018_data = mutate(pre2018_data,year = "2018")
   
-pre2017_data = read_excel("trash_data.xlsx", sheet = 4, skip = 1)
+pre2017_data = read_excel("new_trash_data.xlsx", sheet = 6, skip = 1)
 pre2017_data = janitor::clean_names(pre2017_data) %>%
   drop_na()
-pre2017_data = mutate(pre2017_data, year = "2017")
-
-pre_data = bind_rows(pre2018_data, pre2017_data) %>% 
+pre2017_data = mutate(pre2017_data, year = "2017") %>%
+  mutate(month = as.character(month)) %>%
   mutate(month = month.name[month])
+
+pre_data = bind_rows(pre2018_data, pre2017_data)
+  
 ```
 
-Conclusion: In Mr.Trash Wheel, the total number of observations is `r nrow(MrTrash_data)`. In precipitation dataset, the total number of observations in 2018 is `r nrow(pre2018_data)`, and the total number of observations in 2017 is `r nrow(pre2017_data)`. Specifically, the total precipitation in 2018 is `r sum(pull(pre2018_data, 'total'))`. Also, the median number of sports balls in a dumpster in 2017 is `r median(pull(MrTrash_data, "sports_balls"))`
+Conclusion: In Mr.Trash Wheel, the total number of observations is `r nrow(MrTrash_data)`. In precipitation dataset, the total number of observations in 2018 is `r nrow(pre2018_data)`, and the total number of observations in 2017 is `r nrow(pre2017_data)`. Specifically, the total precipitation in 2018 is `r sum(pull(pre2018_data, 'total'))`. Also, the median number of sports balls in a dumpster in 2017 is `r median(pull(MrTrash_data, "sports_balls"))`.
 
 # problem 2-clean data in pols-month
 ```{r}
@@ -51,7 +53,7 @@ pols_month_data = read.csv("pols-month.csv") %>%
   mutate(month = as.integer(month)) %>%
   mutate(month = month.name[month])
  
-prez_gop = filter(pols_month_data, prez_gop == 1 ) %>%
+prez_gop = filter(pols_month_data, prez_gop == 1 | prez_gop == 2 ) %>%
   mutate(president = "gop")
 prez_dem = filter(pols_month_data, prez_dem == 1) %>%
   mutate(president = "dem")
@@ -95,13 +97,25 @@ Conclusion: The dimension of snp dataset is `r nrow(snp_data)`* `r ncol(snp_data
 ```{r}
 popular_baby_names = read.csv("Popular_Baby_Names.csv")
 popular_baby_names = janitor::clean_names(popular_baby_names)
-popular_baby_names = unique(popular_baby_names)
+popular_baby_names = unique(popular_baby_names) %>%
+  mutate(child_s_first_name = tolower(child_s_first_name),
+         ethnicity = tolower(ethnicity),
+         gender = tolower(gender))
+popular_baby_names_part_1 = filter(popular_baby_names, ethnicity == "asian and paci") %>%
+  mutate(ethnicity = "asian and pacific islander")
+popular_baby_names_part_2 = filter(popular_baby_names, ethnicity != "asian and paci")
+
+popular_baby_name_part = bind_rows(
+  popular_baby_names_part_1, 
+  popular_baby_names_part_2)
+
+
 ```
   
 
 # problem 3-part 2
 ```{r}
-olivia_name_data = filter(popular_baby_names, child_s_first_name == "Olivia") %>%
+olivia_name_data = filter(popular_baby_name_part, child_s_first_name == "Olivia") %>%
   select(ethnicity, year_of_birth, rank)
 olivia_name_data = pivot_wider(olivia_name_data, 
                                ethnicity:rank, 
@@ -112,7 +126,7 @@ olivia_name_data = pivot_wider(olivia_name_data,
 
 # problem 3-part 3
 ```{r}
-popular_male_names = filter(popular_baby_names, gender == "MALE") %>%
+popular_male_names = filter(popular_baby_name_part, gender == "male") %>%
   select(year_of_birth, child_s_first_name, count)
 
 popular_male_names_2016 = filter(popular_male_names, year_of_birth == "2016") 
@@ -145,8 +159,8 @@ most_popular_male_name = bind_rows(popular_male_names_2016,
 # problem 3- part 4
 ```{r}
 white_males_2016 = filter(popular_baby_names, 
-                          gender == "MALE",
-                          ethnicity == "WHITE NON HISPANIC",
+                          gender == "male",
+                          ethnicity == "white non hispanic",
                           year_of_birth == "2016")
 white_males_2016_plot = ggplot(white_males_2016,
                                aes(x = rank, y = count)) + geom_point(aes(color = "lightpink"))

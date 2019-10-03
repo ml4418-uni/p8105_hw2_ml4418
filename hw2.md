@@ -27,14 +27,14 @@ library(ggplot2)
 # problem 1-part 1
 
 ``` r
-MrTrash_data = read_excel("trash_data.xlsx", sheet = 1, range = cell_cols("A:N"))
+MrTrash_data = read_excel("new_trash_data.xlsx", sheet = 1, range = cell_cols("A:N"))
 MrTrash_data = janitor::clean_names(MrTrash_data) %>%
   drop_na()
 
 mutate(MrTrash_data, sports_balls = as.integer(round(sports_balls,0)))
 ```
 
-    ## # A tibble: 285 x 14
+    ## # A tibble: 344 x 14
     ##    dumpster month  year date                weight_tons volume_cubic_ya~
     ##       <dbl> <chr> <dbl> <dttm>                    <dbl>            <dbl>
     ##  1        1 May    2014 2014-05-16 00:00:00        4.31               18
@@ -47,7 +47,7 @@ mutate(MrTrash_data, sports_balls = as.integer(round(sports_balls,0)))
     ##  8        8 May    2014 2014-05-28 00:00:00        3.7                16
     ##  9        9 June   2014 2014-06-05 00:00:00        2.52               14
     ## 10       10 June   2014 2014-06-11 00:00:00        3.76               18
-    ## # ... with 275 more rows, and 8 more variables: plastic_bottles <dbl>,
+    ## # ... with 334 more rows, and 8 more variables: plastic_bottles <dbl>,
     ## #   polystyrene <dbl>, cigarette_butts <dbl>, glass_bottles <dbl>,
     ## #   grocery_bags <dbl>, chip_bags <dbl>, sports_balls <int>,
     ## #   homes_powered <dbl>
@@ -55,25 +55,26 @@ mutate(MrTrash_data, sports_balls = as.integer(round(sports_balls,0)))
 # problem 1-part 2
 
 ``` r
-pre2018_data = read_excel("trash_data.xlsx", sheet = 3, skip = 1)
+pre2018_data = read_excel("new_trash_data.xlsx", sheet = 5, skip = 1)
 pre2018_data = janitor::clean_names(pre2018_data) %>%
-  drop_na()
+drop_na()
 pre2018_data = mutate(pre2018_data,year = "2018")
   
-pre2017_data = read_excel("trash_data.xlsx", sheet = 4, skip = 1)
+pre2017_data = read_excel("new_trash_data.xlsx", sheet = 6, skip = 1)
 pre2017_data = janitor::clean_names(pre2017_data) %>%
   drop_na()
-pre2017_data = mutate(pre2017_data, year = "2017")
-
-pre_data = bind_rows(pre2018_data, pre2017_data) %>% 
+pre2017_data = mutate(pre2017_data, year = "2017") %>%
+  mutate(month = as.character(month)) %>%
   mutate(month = month.name[month])
+
+pre_data = bind_rows(pre2018_data, pre2017_data)
 ```
 
-Conclusion: In Mr.Trash Wheel, the total number of observations is 285.
-In precipitation dataset, the total number of observations in 2018 is 7,
-and the total number of observations in 2017 is 12. Specifically, the
-total precipitation in 2018 is 23.5. Also, the median number of sports
-balls in a dumpster in 2017 is 8
+Conclusion: In Mr.Trash Wheel, the total number of observations is 344.
+In precipitation dataset, the total number of observations in 2018 is
+12, and the total number of observations in 2017 is 12. Specifically,
+the total precipitation in 2018 is 70.33. Also, the median number of
+sports balls in a dumpster in 2017 is 8.
 
 # problem 2-clean data in pols-month
 
@@ -83,7 +84,7 @@ pols_month_data = read.csv("pols-month.csv") %>%
   mutate(month = as.integer(month)) %>%
   mutate(month = month.name[month])
  
-prez_gop = filter(pols_month_data, prez_gop == 1 ) %>%
+prez_gop = filter(pols_month_data, prez_gop == 1 | prez_gop == 2 ) %>%
   mutate(president = "gop")
 prez_dem = filter(pols_month_data, prez_dem == 1) %>%
   mutate(president = "dem")
@@ -123,8 +124,8 @@ final_data =
 ```
 
 Conclusion: The dimension of snp dataset is 787\* 3. The dimension of
-pols-month dataset is 817 \* 9. The dimension of unemployment dataset is
-816 \* 3. The dimension of the final dataset is 817 \* 11. The range of
+pols-month dataset is 822 \* 9. The dimension of unemployment dataset is
+816 \* 3. The dimension of the final dataset is 822 \* 11. The range of
 years in snp dataset is from 1950 to 2015. The range of years in
 pols-month dataset is from 1947 to 2015. The range of years in
 unempolyment dataset is from 1948 to 2015. THe rangeof years in the
@@ -135,13 +136,23 @@ final dataset is from 1947 to 2015.
 ``` r
 popular_baby_names = read.csv("Popular_Baby_Names.csv")
 popular_baby_names = janitor::clean_names(popular_baby_names)
-popular_baby_names = unique(popular_baby_names)
+popular_baby_names = unique(popular_baby_names) %>%
+  mutate(child_s_first_name = tolower(child_s_first_name),
+         ethnicity = tolower(ethnicity),
+         gender = tolower(gender))
+popular_baby_names_part_1 = filter(popular_baby_names, ethnicity == "asian and paci") %>%
+  mutate(ethnicity = "asian and pacific islander")
+popular_baby_names_part_2 = filter(popular_baby_names, ethnicity != "asian and paci")
+
+popular_baby_name_part = bind_rows(
+  popular_baby_names_part_1, 
+  popular_baby_names_part_2)
 ```
 
 # problem 3-part 2
 
 ``` r
-olivia_name_data = filter(popular_baby_names, child_s_first_name == "Olivia") %>%
+olivia_name_data = filter(popular_baby_name_part, child_s_first_name == "Olivia") %>%
   select(ethnicity, year_of_birth, rank)
 olivia_name_data = pivot_wider(olivia_name_data, 
                                ethnicity:rank, 
@@ -152,7 +163,7 @@ olivia_name_data = pivot_wider(olivia_name_data,
 # problem 3-part 3
 
 ``` r
-popular_male_names = filter(popular_baby_names, gender == "MALE") %>%
+popular_male_names = filter(popular_baby_name_part, gender == "male") %>%
   select(year_of_birth, child_s_first_name, count)
 
 popular_male_names_2016 = filter(popular_male_names, year_of_birth == "2016") 
@@ -185,8 +196,8 @@ most_popular_male_name = bind_rows(popular_male_names_2016,
 
 ``` r
 white_males_2016 = filter(popular_baby_names, 
-                          gender == "MALE",
-                          ethnicity == "WHITE NON HISPANIC",
+                          gender == "male",
+                          ethnicity == "white non hispanic",
                           year_of_birth == "2016")
 white_males_2016_plot = ggplot(white_males_2016,
                                aes(x = rank, y = count)) + geom_point(aes(color = "lightpink"))
