@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "p8105_hw2_ml4418"
 author: "Mengyuan Li"
@@ -168,3 +169,161 @@ white_males_2016_plot = ggplot(white_males_2016,
 
   
   
+=======
+---
+title: "p8105_hw2_ml4418"
+author: "Mengyuan Li"
+date: "9/28/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+```
+
+# problem 1-part 1
+```{r}
+MrTrash_data = read_excel("trash_data.xlsx", sheet = 1, range = cell_cols("A:N"))
+MrTrash_data = janitor::clean_names(MrTrash_data) %>%
+  drop_na()
+
+mutate(MrTrash_data, sports_balls = as.integer(round(sports_balls,0)))
+```
+
+
+# problem 1-part 2
+```{r}
+pre2018_data = read_excel("trash_data.xlsx", sheet = 3, skip = 1)
+pre2018_data = janitor::clean_names(pre2018_data) %>%
+  drop_na()
+pre2018_data = mutate(pre2018_data,year = "2018")
+  
+pre2017_data = read_excel("trash_data.xlsx", sheet = 4, skip = 1)
+pre2017_data = janitor::clean_names(pre2017_data) %>%
+  drop_na()
+pre2017_data = mutate(pre2017_data, year = "2017")
+
+pre_data = bind_rows(pre2018_data, pre2017_data) %>% 
+  mutate(month = month.name[month])
+```
+
+Conclusion: In Mr.Trash Wheel, the total number of observations is `r nrow(MrTrash_data)`. In precipitation dataset, the total number of observations in 2018 is `r nrow(pre2018_data)`, and the total number of observations in 2017 is `r nrow(pre2017_data)`. Specifically, the total precipitation in 2018 is `r sum(pull(pre2018_data, 'total'))`. Also, the median number of sports balls in a dumpster in 2017 is `r median(pull(MrTrash_data, "sports_balls"))`
+
+# problem 2-clean data in pols-month
+```{r}
+pols_month_data = read.csv("pols-month.csv") %>%
+  separate(mon, into = c("month", "day", "year"), "/") %>%
+  mutate(month = as.integer(month)) %>%
+  mutate(month = month.name[month])
+ 
+prez_gop = filter(pols_month_data, prez_gop == 1 ) %>%
+  mutate(president = "gop")
+prez_dem = filter(pols_month_data, prez_dem == 1) %>%
+  mutate(president = "dem")
+
+pols_month_data = bind_rows(prez_gop, prez_dem) %>%
+  select(-prez_gop, -prez_dem , -day)
+```
+
+# problem 2-clean date in snp
+```{r}
+snp_data = read.csv("snp.csv") %>%
+  separate(date, into = c("month","day","year"), "/") %>%
+  mutate(month = as.integer(month)) %>%
+  mutate(month = month.name[month]) %>%
+  select(year, month, -day, close)
+```
+
+# problem 2-tidy unemployment data
+```{r}
+un_data = read.csv("unemployment.csv")
+tidy_un_data = 
+  pivot_longer(un_data,
+               Jan:Dec,
+               names_to = "month",
+               values_to = "unempolyment") 
+tidy_un_data = janitor::clean_names(tidy_un_data) %>%
+  mutate(year = as.character(year))
+  
+
+
+join_data = 
+  left_join(pols_month_data, snp_data, by = c("month","year"))
+final_data = 
+  left_join(join_data, tidy_un_data, by = c("month","year"))
+```
+  
+Conclusion: The dimension of snp dataset is `r nrow(snp_data)`* `r ncol(snp_data)`. The dimension of pols-month dataset is `r nrow(pols_month_data)` * `r ncol(pols_month_data)`. The dimension of unemployment dataset is `r nrow(tidy_un_data)` * `r ncol(tidy_un_data)`. The dimension of the final dataset is `r nrow(final_data)` * `r ncol(final_data)`. The range of years in snp dataset is from `r min(pull(snp_data, "year"))` to `r max(pull(snp_data, "year"))`. The range of years in pols-month dataset is from `r min(pull(pols_month_data, "year"))` to `r max(pull(pols_month_data, "year"))`. The range of years in unempolyment dataset is from `r min(pull(tidy_un_data, "year"))` to `r max(pull(tidy_un_data, "year"))`. THe rangeof years in the final dataset is from `r min(pull(final_data, "year"))` to `r max(pull(final_data, "year"))`.
+
+
+# problem 3-part 1
+```{r}
+popular_baby_names = read.csv("Popular_Baby_Names.csv")
+popular_baby_names = janitor::clean_names(popular_baby_names)
+popular_baby_names = unique(popular_baby_names)
+```
+  
+
+# problem 3-part 2
+```{r}
+olivia_name_data = filter(popular_baby_names, child_s_first_name == "Olivia") %>%
+  select(ethnicity, year_of_birth, rank)
+olivia_name_data = pivot_wider(olivia_name_data, 
+                               ethnicity:rank, 
+                               names_from = "year_of_birth",
+                               values_from = "rank")
+```
+
+
+# problem 3-part 3
+```{r}
+popular_male_names = filter(popular_baby_names, gender == "MALE") %>%
+  select(year_of_birth, child_s_first_name, count)
+
+popular_male_names_2016 = filter(popular_male_names, year_of_birth == "2016") 
+popular_male_names_2016 = filter(popular_male_names_2016, count == max(count))
+
+popular_male_names_2015 = filter(popular_male_names, year_of_birth == "2015")
+popular_male_names_2015 = filter(popular_male_names_2015, count == max(count))
+
+popular_male_names_2014 = filter(popular_male_names, year_of_birth == "2014")
+popular_male_names_2014 = filter(popular_male_names_2014, count == max(count))
+
+popular_male_names_2013 = filter(popular_male_names, year_of_birth == "2013")
+popular_male_names_2013 = filter(popular_male_names_2013, count == max(count))
+
+popular_male_names_2012 = filter(popular_male_names, year_of_birth == "2012")
+popular_male_names_2012 = filter(popular_male_names_2012, count == max(count))
+
+popular_male_names_2011 = filter(popular_male_names, year_of_birth == "2011")
+popular_male_names_2011 = filter(popular_male_names_2011, count == max(count))
+
+most_popular_male_name = bind_rows(popular_male_names_2016,
+                                   popular_male_names_2015,
+                                   popular_male_names_2014,
+                                   popular_male_names_2013,
+                                   popular_male_names_2012,
+                                   popular_male_names_2011)
+```
+
+
+# problem 3- part 4
+```{r}
+white_males_2016 = filter(popular_baby_names, 
+                          gender == "MALE",
+                          ethnicity == "WHITE NON HISPANIC",
+                          year_of_birth == "2016")
+white_males_2016_plot = ggplot(white_males_2016,
+                               aes(x = rank, y = count)) + geom_point(aes(color = "lightpink"))
+```
+
+  
+  
+>>>>>>> 3bce762826b44fe8ef7ba282b0aacadc61ecba31
